@@ -1,41 +1,48 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"strings"
 )
 
 func handleConnection(conn net.Conn) {
-	request, err := bufio.NewReader(conn).ReadString('\n')
+	defer conn.Close()
+
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
 	if err != nil {
-		fmt.Println("Error reading client request:", err)
+		fmt.Println("Error reading:", err)
 		return
 	}
-
-	// Extract username and password from the request
-	parts := strings.Split(strings.TrimSpace(request), ",")
-	username := parts[0]
-	password := parts[1]
-
-	// Check credentials
-	if username == "std1" && password == "p@ssw0rd" {
-		fmt.Fprint(conn, "Hello\n")
+	clientData := strings.TrimSpace(string(buffer[:n]))
+	if isValidCredentials(clientData) {
+		conn.Write([]byte("Hello"))
 	} else {
-		fmt.Fprint(conn, "Invalid credentials\n")
+		conn.Write([]byte("Invalid credentials"))
 	}
 }
 
+func isValidCredentials(data string) bool {
+	credentials := strings.Split(data, ":")
+	if len(credentials) != 2 {
+		return false
+	}
+	validUsername := "std1"
+	validPassword := "p@ssw0rd"
+
+	return credentials[0] == validUsername && credentials[1] == validPassword
+}
+
 func main() {
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", ":5000")
 	if err != nil {
-		fmt.Println("Error starting the server:", err)
+		fmt.Println("Error listening:", err)
 		return
 	}
 	defer listener.Close()
 
-	fmt.Println("Server is listening on :8080")
+	fmt.Println("Server is listening on :5000")
 
 	for {
 		conn, err := listener.Accept()
@@ -43,8 +50,6 @@ func main() {
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
-		defer conn.Close()
-
 		go handleConnection(conn)
 	}
 }
