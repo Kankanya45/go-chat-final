@@ -12,7 +12,7 @@ func handleConnection(conn net.Conn) {
 	buffer := make([]byte, 1024)
 	n, err := conn.Read(buffer)
 	if err != nil {
-		fmt.Println("Error reading data:", err)
+		fmt.Println("Error reading:", err)
 		return
 	}
 
@@ -24,16 +24,20 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-// ตรวจสอบข้อมูลบัญชีผู้ใช้
 func isValidCredentials(data string) bool {
-	// กำหนดข้อมูลบัญชีผู้ใช้ที่ถูกต้อง
-	validCredentials := "std1:p@ssw0rd"
+	credentials := strings.Split(data, ":")
+	if len(credentials) != 2 {
+		return false
+	}
 
-	return data == validCredentials
+	validUsername := "std1"
+	validPassword := "p@ssw0rd"
+
+	return credentials[0] == validUsername && credentials[1] == validPassword
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":5000") //เชื่อมต่อ TCP บนพอร์ต 5000 และรอรับการเชื่อมต่อ:
+	listener, err := net.Listen("tcp", ":5000")
 	if err != nil {
 		fmt.Println("Error listening:", err)
 		return

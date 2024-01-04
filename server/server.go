@@ -6,20 +6,30 @@ import (
 	"strings"
 )
 
+const (
+	port          = 5000
+	validUsername = "std1"
+	validPassword = "p@ssw0rd"
+	bufferSize    = 1024
+	helloResponse = "Hello"
+	errorResponse = "Invalid credentials"
+)
+
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, bufferSize)
 	n, err := conn.Read(buffer)
 	if err != nil {
 		fmt.Println("Error reading:", err)
 		return
 	}
+
 	clientData := strings.TrimSpace(string(buffer[:n]))
 	if isValidCredentials(clientData) {
-		conn.Write([]byte("Hello"))
+		conn.Write([]byte(helloResponse))
 	} else {
-		conn.Write([]byte("Invalid credentials"))
+		conn.Write([]byte(errorResponse))
 	}
 }
 
@@ -28,21 +38,19 @@ func isValidCredentials(data string) bool {
 	if len(credentials) != 2 {
 		return false
 	}
-	validUsername := "std1"
-	validPassword := "p@ssw0rd"
 
 	return credentials[0] == validUsername && credentials[1] == validPassword
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":5000")
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		fmt.Println("Error listening:", err)
 		return
 	}
 	defer listener.Close()
 
-	fmt.Println("Server is listening on :5000")
+	fmt.Printf("Server is listening on port %d\n", port)
 
 	for {
 		conn, err := listener.Accept()
